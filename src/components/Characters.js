@@ -8,7 +8,8 @@ const Characters = () => {
   const { characters: list, loading, error } = useCharactersState();
   const { fetchCharacters, dispatch } = useCharactersDispatch();
 
-  useEffect(() => dispatch(() => fetchCharacters(dispatch)), []);
+  console.log("Characters rendered");
+  useEffect(() => dispatch(fetchCharacters), [dispatch, fetchCharacters]);
 
   return (
     <div>

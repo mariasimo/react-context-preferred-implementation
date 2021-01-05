@@ -1,4 +1,4 @@
-import { useContext, useReducer, createContext } from "react";
+import { useContext, useReducer, createContext, useCallback } from "react";
 
 const CharactersStateContext = createContext();
 const CharactersDispatchContext = createContext();
@@ -9,6 +9,7 @@ const initState = {
   error: null,
 };
 const reducer = (state, action) => {
+  console.log(action);
   if (action.type === "LOADING") {
     return {
       characters: [], //empty
@@ -37,13 +38,18 @@ const reducer = (state, action) => {
 const useAsyncReducer = (reducer, initState) => {
   const [state, dispatch] = useReducer(reducer, initState);
 
-  const asyncDispatch = (action) => {
-    if (typeof action === "function") {
-      action(dispatch);
-    } else {
-      dispatch(action);
-    }
-  };
+  const asyncDispatch = useCallback(
+    (action) => {
+      if (typeof action === "function") {
+        // this usually takes dispatch as argument
+        // but we dont need it in this case because is in the scope of fetchCharacters
+        action();
+      } else {
+        dispatch(action);
+      }
+    },
+    [dispatch]
+  );
 
   return [state, asyncDispatch];
 };
@@ -77,18 +83,18 @@ const useCharactersDispatch = () => {
     );
   }
 
-  const fetchCharacters = (asyncDispatch) => {
-    asyncDispatch({ type: "LOADING" });
+  const fetchCharacters = useCallback(() => {
+    dispatch({ type: "LOADING" });
     fetch("https://swapi.dev/api/people/")
       .then((response) => response.json())
       .then((response) => {
         const characters = response.results.map((ch) => ch.name);
-        asyncDispatch({ type: "RESPONSE_OK", payload: { characters } });
+        dispatch({ type: "RESPONSE_OK", payload: { characters } });
       })
       .catch((error) => {
-        asyncDispatch({ type: "ERROR", payload: { error } });
+        dispatch({ type: "ERROR", payload: { error } });
       });
-  };
+  }, [dispatch]);
 
   return { dispatch, fetchCharacters };
 };
